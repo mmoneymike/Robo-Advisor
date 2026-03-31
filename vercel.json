@@ -1,0 +1,24 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "",
+  "framework": null,
+  "builds": [
+    { "src": "api/index.py", "use": "@vercel/python" },
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "css/**", "use": "@vercel/static" },
+    { "src": "js/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api(.*)", "dest": "/api/index.py" },
+    { "src": "/(.*)", "dest": "/$1" }
+  ],
+  "headers": [
+    {
+      "source": "/api(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, OPTIONS" }
+      ]
+    }
+  ]
+}
