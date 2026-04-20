@@ -1,1 +1,16 @@
-.vercel
+# Dependencies & build
+node_modules/
+dist/
+
+# TypeScript incremental
+*.tsbuildinfo
+
+# Environment
+.env
+.env.*.local
+
+# OS / editor
+.DS_Store
+
+# Vercel (link metadata + cache — use `vercel link` after clone)
+.vercel/

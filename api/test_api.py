@@ -39,7 +39,7 @@ class RoboAdvisorApiTests(unittest.TestCase):
     def test_manual_override_infers_profile(self):
         query = (
             "mode=manual_override&risk=5&horizon=10"
-            "&manual_us_equity=35&manual_intl_equity=15&manual_bonds=35&manual_reits=10&manual_cash=5"
+            "&manual_spym=50&manual_vea=15&manual_agg=35"
         )
         status, body = run_app(query)
         self.assertEqual(status, "200 OK")
@@ -56,14 +56,39 @@ class RoboAdvisorApiTests(unittest.TestCase):
         status, body = run_app(query)
         self.assertEqual(status, "200 OK")
         final_weights = body["final_weights"]
-        self.assertLessEqual(final_weights["us_equity"], 70.0)
-        self.assertGreaterEqual(final_weights["cash"], 0.0)
+        self.assertLessEqual(final_weights["spym"], 80.0)
+        self.assertGreaterEqual(final_weights["agg"], 10.0)
         self.assertAlmostEqual(sum(final_weights.values()), 100.0, places=1)
 
     def test_invalid_mode(self):
         status, body = run_app("mode=abc")
         self.assertEqual(status, "400 Bad Request")
         self.assertIn("mode must be inferred_profile or manual_override", body["error"])
+
+    def test_portfolio_dashboard_blends_by_risk(self):
+        status_lo, body_lo = run_app("portfolio_type=core&risk=1")
+        self.assertEqual(status_lo, "200 OK")
+        status_hi, body_hi = run_app("portfolio_type=core&risk=10")
+        self.assertEqual(status_hi, "200 OK")
+        self.assertAlmostEqual(sum(body_lo["weights"].values()), 100.0, places=1)
+        self.assertAlmostEqual(sum(body_hi["weights"].values()), 100.0, places=1)
+        self.assertEqual(body_lo["risk_profile"], "Very Conservative")
+        self.assertEqual(body_hi["risk_profile"], "High Growth")
+        # Lower risk holds more fixed income than higher risk
+        self.assertGreater(
+            body_lo["weights"]["fixed"],
+            body_hi["weights"]["fixed"],
+        )
+        self.assertGreater(
+            body_hi["weights"]["us_eq"],
+            body_lo["weights"]["us_eq"],
+        )
+
+    def test_portfolio_dashboard_mid_risk(self):
+        status, body = run_app("portfolio_type=core&risk=5")
+        self.assertEqual(status, "200 OK")
+        self.assertEqual(body["risk_score"], 5)
+        self.assertEqual(body["risk_profile"], "Moderate")
 
 
 if __name__ == "__main__":
